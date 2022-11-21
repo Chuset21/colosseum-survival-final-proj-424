@@ -11,7 +11,7 @@
 To setup the game, clone this repository and install the dependencies:
 
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ## Playing a game
