@@ -19,6 +19,7 @@ class StudentAgent(Agent):
             "d": 2,
             "l": 3,
         }
+        self.autoplay = True
 
     @staticmethod
     def is_pos_in_valid_moves_set(valid_moves: set[((int, int), int)], x: int, y: int) -> bool:
