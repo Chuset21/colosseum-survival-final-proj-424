@@ -5,6 +5,14 @@ from agents.agent import Agent
 from store import register_agent
 
 
+def get_max_idx(int_list: list[int]):
+    result, cur_max = 0, int_list[0]
+    for i, e in enumerate(int_list):
+        if e > cur_max:
+            result = i
+    return result
+
+
 @register_agent("student_agent")
 class StudentAgent(Agent):
     """
@@ -137,8 +145,8 @@ class StudentAgent(Agent):
 
         for r in range(board_size):
             for c in range(board_size):
-                for dir, move in enumerate(StudentAgent.moves[1:3]):  # Only check down and right
-                    if chess_board[r, c, dir + 1]:
+                for direction, move in enumerate(StudentAgent.moves[1:3]):  # Only check down and right
+                    if chess_board[r, c, direction + 1]:
                         continue
                     pos_a = find((r, c))
                     pos_b = find((r + move[0], c + move[1]))
@@ -153,12 +161,12 @@ class StudentAgent(Agent):
         p0_score = list(father.values()).count(p0_r)
         p1_score = list(father.values()).count(p1_r)
         if p0_r == p1_r:
-            return StudentAgent.WinningHeuristics.NOT_END_GAME
+            return StudentAgent.WinningHeuristic.NOT_END_GAME.value
         if p0_score > p1_score:
-            return StudentAgent.WinningHeuristics.WIN
+            return StudentAgent.WinningHeuristic.WIN.value
         if p0_score < p1_score:
-            return StudentAgent.WinningHeuristics.LOSS
-        return StudentAgent.WinningHeuristics.TIE
+            return StudentAgent.WinningHeuristic.LOSS.value
+        return StudentAgent.WinningHeuristic.TIE.value
 
     def step(self, chess_board: object, my_pos, adv_pos, max_step):
         """
@@ -176,6 +184,18 @@ class StudentAgent(Agent):
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
         board_size = chess_board.shape[0]
+        heuristic_list = []
+        valid_moves = list(StudentAgent.get_valid_moves(chess_board, my_pos, adv_pos, max_step))
 
-        # get all valid moves and choose one at random
-        return StudentAgent.get_valid_moves(chess_board, my_pos, adv_pos, max_step).pop()
+        for i, ((x, y), direction) in enumerate(valid_moves):
+            chess_board[x, y, direction] = True
+
+            heuristic = StudentAgent.check_endgame(board_size, chess_board, my_pos, adv_pos)
+            if heuristic == StudentAgent.WinningHeuristic.WIN:
+                return (x, y), direction
+
+            chess_board[x, y, direction] = False
+            heuristic_list.append(heuristic)
+
+        # choose the highest heuristic
+        return valid_moves[get_max_idx(heuristic_list)]
