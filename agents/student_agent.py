@@ -21,7 +21,7 @@ class StudentAgent(Agent):
         }
         self.valid_moves_set = set()
 
-    def is_pos_in_valid_moves_set(self, cur_pos: (int, int)) -> bool:
+    def is_pos_in_valid_moves_set(self,  x: int, y: int) -> bool:
         """
 
         Parameters
@@ -33,12 +33,12 @@ class StudentAgent(Agent):
         bool        True if the position is in the set, False otherwise
         """
         for i in range(4):
-            if (cur_pos[0], cur_pos[1], i) in self.valid_moves_set:
+            if (x, y, i) in self.valid_moves_set:
                 return True
         return False
 
     @staticmethod
-    def is_within_board_boundaries(chess_board: object, cur_pos: (int, int)) -> bool:
+    def is_within_board_boundaries(chess_board: object, x: int, y: int) -> bool:
         """
 
         Parameters
@@ -51,7 +51,7 @@ class StudentAgent(Agent):
         bool            True if the position is within the board bounds, False otherwise
         """
         max_bound = chess_board.shape[0]
-        return 0 <= cur_pos[0] < max_bound and 0 <= cur_pos[1] < max_bound
+        return 0 <= x < max_bound and 0 <= y < max_bound
 
     def update_valid_moves(self, chess_board: object, cur_pos: (int, int), adv_pos: (int, int), cur_step: int,
                            max_step: int):
@@ -65,10 +65,29 @@ class StudentAgent(Agent):
         cur_step        an int being the current number of steps from the original position
         max_step        an int being the max number of steps that can be taken
         """
-        if cur_step > max_step or cur_pos == adv_pos or not self.is_within_board_boundaries(chess_board, cur_pos) \
-                or self.is_pos_in_valid_moves_set(cur_pos):
+        x, y = cur_pos
+        if cur_pos == adv_pos or not self.is_within_board_boundaries(chess_board, x, y) \
+                or self.is_pos_in_valid_moves_set(x, y):
             return
-        # TODO implement actual function
+
+        for i in range(4):
+            if not chess_board[x, y, i]:
+                self.valid_moves_set.add(((x, y), i))
+
+        cur_step += 1
+        if cur_step <= max_step:
+            if not chess_board[x, y, 0]:
+                self.update_valid_moves(chess_board, (x - 1, y), adv_pos, cur_step, max_step)
+
+            if not chess_board[x, y, 1]:
+                self.update_valid_moves(chess_board, (x, y + 1), adv_pos, cur_step, max_step)
+
+            if not chess_board[x, y, 2]:
+                self.update_valid_moves(chess_board, (x + 1, y), adv_pos, cur_step, max_step)
+
+            if not chess_board[x, y, 3]:
+                self.update_valid_moves(chess_board, (x, y - 1), adv_pos, cur_step, max_step)
+
         return
 
     def step(self, chess_board, my_pos, adv_pos, max_step):
@@ -92,4 +111,4 @@ class StudentAgent(Agent):
         # now valid_moves_set contains all valid moves
 
         # dummy return
-        return my_pos, self.dir_map["u"]
+        return self.valid_moves_set.pop()
