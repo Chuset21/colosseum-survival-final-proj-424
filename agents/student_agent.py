@@ -41,7 +41,7 @@ class StudentAgent(Agent):
         TIE = 0
 
     @staticmethod
-    def is_visited(valid_moves: dict[((int, int), int), int], x: int, y: int, cur_step: int) -> bool:
+    def is_visited(valid_moves: dict[tuple[tuple[int, int], int], int], x: int, y: int, cur_step: int) -> bool:
         """
 
         Parameters
@@ -78,8 +78,8 @@ class StudentAgent(Agent):
         return 0 <= x < board_size and 0 <= y < board_size
 
     @staticmethod
-    def get_valid_moves(chess_board: object, my_pos: (int, int), adv_pos: (int, int), max_step: int) -> \
-            list[((int, int), int)]:
+    def get_valid_moves(chess_board: object, my_pos: tuple[int, int], adv_pos: tuple[int, int], max_step: int) -> \
+            list[tuple[tuple[int, int], int]]:
         """
 
         Parameters
