@@ -41,9 +41,14 @@ class StudentAgent(Agent):
         WIN = 100.0
         LOSS = -100.0
         TIE = 0.0
+
     class AntiBoxHeuristic(Enum):
         NOT_SAFE = -20
         SAFE = 0
+
+    class AggressionHeuristic(Enum):
+        AGGRESSIVE = 2
+        NOT_AGGRESSIVE = 0
 
     @staticmethod
     def is_visited(valid_moves: dict[tuple[tuple[int, int], int], int], x: int, y: int, cur_step: int) -> bool:
@@ -250,6 +255,17 @@ class StudentAgent(Agent):
         """
         return 1 / math.sqrt((x - adv_pos[0]) ** 2 + (y - adv_pos[1]) ** 2)
 
+    @staticmethod
+    def aggression_heuristic(x: int, y: int, direction: int, adv_pos: tuple[int, int]) -> int:
+        op_x, op_y = adv_pos
+        # we are above, to the right, below or to the left of the opponent respectively
+        if (op_x - 1 == x and op_y == y and direction == 2) \
+                or (op_x == x and op_y + 1 == y and direction == 3) \
+                or (op_x + 1 == x and op_y == y and direction == 0) \
+                or (op_x == x and op_y - 1 == y and direction == 1):
+            return StudentAgent.AggressionHeuristic.AGGRESSIVE.value
+        return StudentAgent.AggressionHeuristic.NOT_AGGRESSIVE.value
+
     def step(self, chess_board: object, my_pos, adv_pos, max_step):
         """
         Implement the step function of your agent here.
@@ -284,8 +300,10 @@ class StudentAgent(Agent):
             fy = float(y)
             center_heuristic = StudentAgent.center_heuristic(center, fx, fy)
             chasing_heuristic = StudentAgent.chasing_heuristic(fx, fy, f_adv_pos)
+            aggression_heuristic = StudentAgent.aggression_heuristic(x, y, direction, adv_pos)
             StudentAgent.set_barrier_to_value(chess_board, x, y, direction, False)
-            heuristic_list.append(anti_box_heuristic + center_heuristic + end_game_heuristic + chasing_heuristic)
+            heuristic_list.append(
+                anti_box_heuristic + center_heuristic + end_game_heuristic + chasing_heuristic + aggression_heuristic)
 
         # choose the move with the highest heuristic
         return valid_moves[get_max_idx(heuristic_list)]
