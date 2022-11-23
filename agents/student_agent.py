@@ -1,14 +1,16 @@
 # Student agent: Add your own agent here
+import math
 from enum import Enum
 
 from agents.agent import Agent
 from store import register_agent
 
 
-def get_max_idx(int_list: list[int]):
-    result, cur_max = 0, int_list[0]
-    for i, e in enumerate(int_list):
+def get_max_idx(heuristics: list[float]) -> int:
+    result, cur_max = 0, heuristics[0]
+    for i, e in enumerate(heuristics):
         if e > cur_max:
+            cur_max = e
             result = i
     return result
 
@@ -35,10 +37,10 @@ class StudentAgent(Agent):
     OPPOSITES = {0: 2, 1: 3, 2: 0, 3: 1}
 
     class WinningHeuristic(Enum):
-        NOT_END_GAME = 1  # better than tying?
-        WIN = 20000
-        LOSS = -20000
-        TIE = 0
+        NOT_END_GAME = 1.0  # better than tying?
+        WIN = 100.0
+        LOSS = -100.0
+        TIE = 0.0
 
     @staticmethod
     def is_visited(valid_moves: dict[tuple[tuple[int, int], int], int], x: int, y: int, cur_step: int) -> bool:
@@ -126,7 +128,8 @@ class StudentAgent(Agent):
         return list(valid_moves_dict.keys())
 
     @staticmethod
-    def get_endgame_heuristic(board_size: int, chess_board: object, p0_pos: tuple[int, int], p1_pos: tuple[int, int]) -> int:
+    def get_endgame_heuristic(board_size: int, chess_board: object, p0_pos: tuple[int, int], p1_pos: tuple[int, int]) \
+            -> float:
         """
         Adapted from world.py.
         Check if the game ends and compute the current score of the agents.
@@ -186,6 +189,24 @@ class StudentAgent(Agent):
         move = StudentAgent.MOVES[direction]
         chess_board[x + move[0], y + move[1], StudentAgent.OPPOSITES[direction]] = value
 
+    @staticmethod
+    def center_heuristic(center: float, x: float, y: float, ) -> float:
+        """
+
+        Parameters
+        ----------
+        center      The center coordinate of the board
+        x           The current x coordinate
+        y           The current y coordinate
+
+        Returns
+        -------
+        A heuristic value inversely proportional to the distance to the center of the board
+        """
+        if x == center and x == y:
+            return 2
+        return 1 / math.sqrt((x - center) ** 2 + (y - center) ** 2)
+
     def step(self, chess_board: object, my_pos, adv_pos, max_step):
         """
         Implement the step function of your agent here.
@@ -202,14 +223,17 @@ class StudentAgent(Agent):
         Please check the sample implementation in agents/random_agent.py or agents/human_agent.py for more details.
         """
         board_size = chess_board.shape[0]
+        # Get the center coordinate of the board
+        center = (board_size - 1) / 2
         heuristic_list = []
         valid_moves = StudentAgent.get_valid_moves(chess_board, my_pos, adv_pos, max_step)
 
         for (x, y), direction in valid_moves:
             StudentAgent.set_barrier_to_value(chess_board, x, y, direction, True)
 
-            heuristic = StudentAgent.get_endgame_heuristic(board_size, chess_board, (x, y), adv_pos)
-            if heuristic == StudentAgent.WinningHeuristic.WIN:
+            heuristic = StudentAgent.get_endgame_heuristic(board_size, chess_board, (x, y), adv_pos) \
+                        + StudentAgent.center_heuristic(center, float(x), float(y))
+            if heuristic >= StudentAgent.WinningHeuristic.WIN.value:
                 return (x, y), direction
 
             StudentAgent.set_barrier_to_value(chess_board, x, y, direction, False)
