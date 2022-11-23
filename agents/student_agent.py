@@ -207,7 +207,7 @@ class StudentAgent(Agent):
         A heuristic value inversely proportional to the distance to the center of the board
         """
         if x == center and x == y:
-            return 2
+            return 1.5
         return 1 / math.sqrt((x - center) ** 2 + (y - center) ** 2)
 
     @staticmethod
@@ -234,6 +234,22 @@ class StudentAgent(Agent):
         else:
             return StudentAgent.AntiBoxHeuristic.SAFE.value
 
+    @staticmethod
+    def chasing_heuristic(x: float, y: float, adv_pos: tuple[float, float]) -> float:
+        """
+
+        Parameters
+        ----------
+        x               The current x coordinate
+        y               The current y coordinate
+        adv_pos         The adversary's position
+
+        Returns
+        -------
+        A heuristic value inversely proportional to the distance between both players.
+        """
+        return 1 / math.sqrt((x - adv_pos[0]) ** 2 + (y - adv_pos[1]) ** 2)
+
     def step(self, chess_board: object, my_pos, adv_pos, max_step):
         """
         Implement the step function of your agent here.
@@ -252,6 +268,7 @@ class StudentAgent(Agent):
         board_size = chess_board.shape[0]
         # Get the center coordinate of the board
         center = (board_size - 1) / 2
+        f_adv_pos = (float(adv_pos[0]), float(adv_pos[1]))
         heuristic_list = []
         valid_moves = StudentAgent.get_valid_moves(chess_board, my_pos, adv_pos, max_step)
 
@@ -263,9 +280,12 @@ class StudentAgent(Agent):
                 return (x, y), direction
 
             anti_box_heuristic = StudentAgent.anti_box_heuristic(chess_board, x, y)
-            center_heuristic = StudentAgent.center_heuristic(center, float(x), float(y))
+            fx = float(x)
+            fy = float(y)
+            center_heuristic = StudentAgent.center_heuristic(center, fx, fy)
+            chasing_heuristic = StudentAgent.chasing_heuristic(fx, fy, f_adv_pos)
             StudentAgent.set_barrier_to_value(chess_board, x, y, direction, False)
-            heuristic_list.append(anti_box_heuristic + center_heuristic + end_game_heuristic)
+            heuristic_list.append(anti_box_heuristic + center_heuristic + end_game_heuristic + chasing_heuristic)
 
         # choose the move with the highest heuristic
         return valid_moves[get_max_idx(heuristic_list)]
