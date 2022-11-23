@@ -45,7 +45,7 @@ python3 simulator.py --player_1 human_agent --player_2 random_agent --display
 Since boards are drawn randomly (between a [`MIN_BOARD_SIZE`](world.py#L17) and [`MAX_BOARD_SIZE`](world.py#L18)) you can compute an aggregate win % over your agents. Use the `--autoplay` flag to run $n$ games sequentially, where $n$ can be set using `--autoplay_runs`.
 
 ```bash
-python3 simulator.py --player_1 random_agent --player_2 random_agent --autoplay
+python3 simulator.py --player_1 student_agent --player_2 random_agent --autoplay
 ```
 
 During autoplay, boards are drawn randomly between size `--board_size_min` and `--board_size_max` for each iteration.
@@ -76,13 +76,13 @@ You will submit only one code file for grading: student_agent.py. It will be a g
 5. As a final test before submitting, make 100% sure the player you wish to be evaluated on is run with the following commands (to get a strong grade, you should nearly always beat the random_agent and it should be as hard as possible for you to beat it with human play.
 
     ```bash
-    python3 simulator.py --player_1 random_agent --player_2 student_agent --display 
+    python3 simulator.py --player_1 student_agent --player_2 random_agent --display 
     ```
 
 6. Check autoplay with your agent and `random_agent` is working
 
     ```bash
-    python3 simulator.py --player_1 random_agent --player_2 student_agent --autoplay
+    python3 simulator.py --player_1 student_agent --player_2 random_agent --autoplay
     ```
 
 ## Full API
