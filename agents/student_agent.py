@@ -31,7 +31,8 @@ class StudentAgent(Agent):
         }
         self.autoplay = True
 
-    moves = ((-1, 0), (0, 1), (1, 0), (0, -1))
+    MOVES = ((-1, 0), (0, 1), (1, 0), (0, -1))
+    OPPOSITES = {0: 2, 1: 3, 2: 0, 3: 1}
 
     class WinningHeuristic(Enum):
         NOT_END_GAME = 1  # better than tying?
@@ -40,21 +41,25 @@ class StudentAgent(Agent):
         TIE = 0
 
     @staticmethod
-    def is_pos_in_valid_moves_set(valid_moves: set[((int, int), int)], x: int, y: int) -> bool:
+    def is_visited(valid_moves: dict[((int, int), int), int], x: int, y: int, cur_step: int) -> bool:
         """
 
         Parameters
         ----------
-        valid_moves a set of valid moves
-        cur_pos     a tuple of (x, y) being the current position
+        valid_moves a dictionary of valid moves, mapping valid moves to their step count
+        x           the current x position
+        y           the current y position
+        cur_step    an integer denoting the current step
 
         Returns
         -------
-        bool        True if the position is in the set, False otherwise
+        bool        True if the position is in the dictionary and the corresponding value is less than the current step.
+        False otherwise
         """
         for i in range(4):
-            if ((x, y), i) in valid_moves:
-                return True
+            if t := valid_moves.get(((x, y), i)):
+                if t < cur_step:
+                    return True
         return False
 
     @staticmethod
@@ -74,7 +79,7 @@ class StudentAgent(Agent):
 
     @staticmethod
     def get_valid_moves(chess_board: object, my_pos: (int, int), adv_pos: (int, int), max_step: int) -> \
-            set[((int, int), int)]:
+            list[((int, int), int)]:
         """
 
         Parameters
@@ -86,20 +91,20 @@ class StudentAgent(Agent):
 
         Returns
         -------
-        set[((int, int), int)]  a set of valid moves
+        list[((int, int), int)]  a list of valid moves
         """
-        valid_moves_set = set()
+        valid_moves_dict = {}
         board_size = chess_board.shape[0]
 
         def update_valid_moves(cur_pos: (int, int), cur_step: int):
             x, y = cur_pos
             if cur_pos == adv_pos or not StudentAgent.is_within_board_boundaries(board_size, x, y) \
-                    or StudentAgent.is_pos_in_valid_moves_set(valid_moves_set, x, y):
+                    or StudentAgent.is_visited(valid_moves_dict, x, y, cur_step):
                 return
 
             for i in range(4):
                 if not chess_board[x, y, i]:
-                    valid_moves_set.add(((x, y), i))
+                    valid_moves_dict[((x, y), i)] = cur_step
 
             cur_step += 1
             if cur_step <= max_step:
@@ -114,13 +119,14 @@ class StudentAgent(Agent):
 
                 if not chess_board[x, y, 3]:
                     update_valid_moves((x, y - 1), cur_step)
-            return
 
+        # call the backtracking algorithm to get all the valid moves
         update_valid_moves(my_pos, 0)
-        return valid_moves_set
+
+        return list(valid_moves_dict.keys())
 
     @staticmethod
-    def check_endgame(board_size: int, chess_board: object, p0_pos: tuple[int, int], p1_pos: tuple[int, int]) -> int:
+    def get_endgame_heuristic(board_size: int, chess_board: object, p0_pos: tuple[int, int], p1_pos: tuple[int, int]) -> int:
         """
         Adapted from world.py.
         Check if the game ends and compute the current score of the agents.
@@ -145,7 +151,7 @@ class StudentAgent(Agent):
 
         for r in range(board_size):
             for c in range(board_size):
-                for direction, move in enumerate(StudentAgent.moves[1:3]):  # Only check down and right
+                for direction, move in enumerate(StudentAgent.MOVES[1:3]):  # Only check down and right
                     if chess_board[r, c, direction + 1]:
                         continue
                     pos_a = find((r, c))
@@ -168,6 +174,18 @@ class StudentAgent(Agent):
             return StudentAgent.WinningHeuristic.LOSS.value
         return StudentAgent.WinningHeuristic.TIE.value
 
+    @staticmethod
+    def set_barrier_to_value(chess_board: object, x: int, y: int, direction: int, value: bool):
+        """
+        Adapted from world.py.
+        Set a barrier to True or False.
+        """
+        # Set the barrier to True
+        chess_board[x, y, direction] = value
+        # Set the opposite barrier to True
+        move = StudentAgent.MOVES[direction]
+        chess_board[x + move[0], y + move[1], StudentAgent.OPPOSITES[direction]] = value
+
     def step(self, chess_board: object, my_pos, adv_pos, max_step):
         """
         Implement the step function of your agent here.
@@ -185,17 +203,17 @@ class StudentAgent(Agent):
         """
         board_size = chess_board.shape[0]
         heuristic_list = []
-        valid_moves = list(StudentAgent.get_valid_moves(chess_board, my_pos, adv_pos, max_step))
+        valid_moves = StudentAgent.get_valid_moves(chess_board, my_pos, adv_pos, max_step)
 
-        for i, ((x, y), direction) in enumerate(valid_moves):
-            chess_board[x, y, direction] = True
+        for (x, y), direction in valid_moves:
+            StudentAgent.set_barrier_to_value(chess_board, x, y, direction, True)
 
-            heuristic = StudentAgent.check_endgame(board_size, chess_board, my_pos, adv_pos)
+            heuristic = StudentAgent.get_endgame_heuristic(board_size, chess_board, (x, y), adv_pos)
             if heuristic == StudentAgent.WinningHeuristic.WIN:
                 return (x, y), direction
 
-            chess_board[x, y, direction] = False
+            StudentAgent.set_barrier_to_value(chess_board, x, y, direction, False)
             heuristic_list.append(heuristic)
 
-        # choose the highest heuristic
+        # choose the move with the highest heuristic
         return valid_moves[get_max_idx(heuristic_list)]
