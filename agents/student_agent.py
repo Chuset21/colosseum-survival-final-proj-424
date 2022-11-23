@@ -58,7 +58,7 @@ class StudentAgent(Agent):
         """
         for i in range(4):
             if t := valid_moves.get(((x, y), i)):
-                if t < cur_step:
+                if t <= cur_step:
                     return True
         return False
 
