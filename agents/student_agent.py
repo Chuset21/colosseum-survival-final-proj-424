@@ -41,6 +41,9 @@ class StudentAgent(Agent):
         WIN = 100.0
         LOSS = -100.0
         TIE = 0.0
+    class AntiBoxHeuristic(Enum):
+        NOT_SAFE = -20
+        SAFE = 0
 
     @staticmethod
     def is_visited(valid_moves: dict[tuple[tuple[int, int], int], int], x: int, y: int, cur_step: int) -> bool:
@@ -207,6 +210,30 @@ class StudentAgent(Agent):
             return 2
         return 1 / math.sqrt((x - center) ** 2 + (y - center) ** 2)
 
+    @staticmethod
+    def anti_box_heuristic(chess_board: object, x: int, y: int) -> int:
+        """
+
+        Parameters
+        ----------
+        chess_board     a numpy array of shape (x_max, y_max, 4)
+        x               The current x coordinate
+        y               The current y coordinate
+
+        Returns
+        -------
+        A heuristic value which is negative if the player has 3 or more barriers around it. 0 otherwise.
+        """
+        count = 0
+        for i in range(4):
+            if chess_board[x, y, i]:
+                count += 1
+
+        if count >= 3:
+            return StudentAgent.AntiBoxHeuristic.NOT_SAFE.value
+        else:
+            return StudentAgent.AntiBoxHeuristic.SAFE.value
+
     def step(self, chess_board: object, my_pos, adv_pos, max_step):
         """
         Implement the step function of your agent here.
@@ -231,13 +258,14 @@ class StudentAgent(Agent):
         for (x, y), direction in valid_moves:
             StudentAgent.set_barrier_to_value(chess_board, x, y, direction, True)
 
-            heuristic = StudentAgent.get_endgame_heuristic(board_size, chess_board, (x, y), adv_pos) \
-                        + StudentAgent.center_heuristic(center, float(x), float(y))
-            if heuristic >= StudentAgent.WinningHeuristic.WIN.value:
+            end_game_heuristic = StudentAgent.get_endgame_heuristic(board_size, chess_board, (x, y), adv_pos)
+            if end_game_heuristic == StudentAgent.WinningHeuristic.WIN.value:
                 return (x, y), direction
 
+            anti_box_heuristic = StudentAgent.anti_box_heuristic(chess_board, x, y)
+            center_heuristic = StudentAgent.center_heuristic(center, float(x), float(y))
             StudentAgent.set_barrier_to_value(chess_board, x, y, direction, False)
-            heuristic_list.append(heuristic)
+            heuristic_list.append(anti_box_heuristic + center_heuristic + end_game_heuristic)
 
         # choose the move with the highest heuristic
         return valid_moves[get_max_idx(heuristic_list)]
