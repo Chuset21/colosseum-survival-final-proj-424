@@ -2,11 +2,13 @@
 import math
 from enum import Enum
 
+from typing import Dict, Tuple, List
+
 from agents.agent import Agent
 from store import register_agent
 
 
-def get_max_idx(heuristics: list[float]) -> int:
+def get_max_idx(heuristics: List[float]) -> int:
     result, cur_max = 0, heuristics[0]
     for i, e in enumerate(heuristics):
         if e > cur_max:
@@ -51,7 +53,7 @@ class StudentAgent(Agent):
         NOT_AGGRESSIVE = 0
 
     @staticmethod
-    def is_visited(valid_moves: dict[tuple[tuple[int, int], int], int], x: int, y: int, cur_step: int) -> bool:
+    def is_visited(valid_moves: Dict[Tuple[Tuple[int, int], int], int], x: int, y: int, cur_step: int) -> bool:
         """
 
         Parameters
@@ -88,8 +90,8 @@ class StudentAgent(Agent):
         return 0 <= x < board_size and 0 <= y < board_size
 
     @staticmethod
-    def get_valid_moves(chess_board: object, my_pos: tuple[int, int], adv_pos: tuple[int, int], max_step: int) -> \
-            list[tuple[tuple[int, int], int]]:
+    def get_valid_moves(chess_board: any, my_pos: Tuple[int, int], adv_pos: Tuple[int, int], max_step: int) -> \
+            List[Tuple[Tuple[int, int], int]]:
         """
 
         Parameters
@@ -136,7 +138,7 @@ class StudentAgent(Agent):
         return list(valid_moves_dict.keys())
 
     @staticmethod
-    def get_endgame_heuristic(board_size: int, chess_board: object, p0_pos: tuple[int, int], p1_pos: tuple[int, int]) \
+    def get_endgame_heuristic(board_size: int, chess_board: any, p0_pos:    Tuple[int, int], p1_pos: Tuple[int, int]) \
             -> float:
         """
         Adapted from world.py.
@@ -186,7 +188,7 @@ class StudentAgent(Agent):
         return StudentAgent.WinningHeuristic.TIE.value
 
     @staticmethod
-    def set_barrier_to_value(chess_board: object, x: int, y: int, direction: int, value: bool):
+    def set_barrier_to_value(chess_board: any, x: int, y: int, direction: int, value: bool):
         """
         Adapted from world.py.
         Set a barrier to True or False.
@@ -216,7 +218,7 @@ class StudentAgent(Agent):
         return 1 / math.sqrt((x - center) ** 2 + (y - center) ** 2)
 
     @staticmethod
-    def anti_box_heuristic(chess_board: object, x: int, y: int) -> int:
+    def anti_box_heuristic(chess_board: any, x: int, y: int) -> int:
         """
 
         Parameters
@@ -240,7 +242,7 @@ class StudentAgent(Agent):
             return StudentAgent.AntiBoxHeuristic.SAFE.value
 
     @staticmethod
-    def chasing_heuristic(x: float, y: float, adv_pos: tuple[float, float]) -> float:
+    def chasing_heuristic(x: float, y: float, adv_pos: Tuple[float, float]) -> float:
         """
 
         Parameters
@@ -256,7 +258,7 @@ class StudentAgent(Agent):
         return 1 / math.sqrt((x - adv_pos[0]) ** 2 + (y - adv_pos[1]) ** 2)
 
     @staticmethod
-    def aggression_heuristic(x: int, y: int, direction: int, adv_pos: tuple[int, int]) -> int:
+    def aggression_heuristic(x: int, y: int, direction: int, adv_pos: Tuple[int, int]) -> int:
         op_x, op_y = adv_pos
         # we are above, to the right, below or to the left of the opponent respectively
         if (op_x - 1 == x and op_y == y and direction == 2) \
@@ -266,7 +268,7 @@ class StudentAgent(Agent):
             return StudentAgent.AggressionHeuristic.AGGRESSIVE.value
         return StudentAgent.AggressionHeuristic.NOT_AGGRESSIVE.value
 
-    def step(self, chess_board: object, my_pos, adv_pos, max_step):
+    def step(self, chess_board: any, my_pos, adv_pos, max_step):
         """
         Implement the step function of your agent here.
         You can use the following variables to access the chess board:
