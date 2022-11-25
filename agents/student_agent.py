@@ -1,6 +1,7 @@
 # Student agent: Add your own agent here
 import math
 from enum import Enum
+from typing import Tuple
 
 from agents.agent import Agent
 from store import register_agent
@@ -106,7 +107,7 @@ class StudentAgent(Agent):
         valid_moves_dict = {}
         board_size = chess_board.shape[0]
 
-        def update_valid_moves(cur_pos: (int, int), cur_step: int):
+        def update_valid_moves(cur_pos: Tuple[int, int], cur_step: int):
             x, y = cur_pos
             if cur_pos == adv_pos or not StudentAgent.is_within_board_boundaries(board_size, x, y) \
                     or StudentAgent.is_visited(valid_moves_dict, x, y, cur_step):
@@ -257,6 +258,19 @@ class StudentAgent(Agent):
 
     @staticmethod
     def aggression_heuristic(x: int, y: int, direction: int, adv_pos: tuple[int, int]) -> int:
+        """
+
+        Parameters
+        ----------
+        x               The current x coordinate
+        y               The current y coordinate
+        direction       The direction to put the barrier
+        adv_pos         The adversary's position
+
+        Returns
+        -------
+        A heuristic value that is positive if we are beside the opponent and placing a barrier towards them, 0 otherwise
+        """
         op_x, op_y = adv_pos
         # we are above, to the right, below or to the left of the opponent respectively
         if (op_x - 1 == x and op_y == y and direction == 2) \
